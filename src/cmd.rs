@@ -2,10 +2,18 @@ use crate::cmd_registry::CommandRegistry;
 use crate::shell::Shell;
 use std::fs;
 use std::path::PathBuf;
+
+// information about a command for use in "help" and man pages
+#[derive(Clone)]
+pub struct CommandInfo {
+    pub description: &'static str,
+    pub syntax: &'static str,
+}
+
 // trait implemented by commands to run
 pub trait Command {
     fn run(&self, shell: &mut Shell, args: &[String]) -> Result<(), &'static str>;
-    fn description(&self) -> &str;
+    fn description(&self) -> CommandInfo;
 }
 
 // implementation of cd command
@@ -41,8 +49,11 @@ impl Command for CdCommand {
         }
     }
 
-    fn description(&self) -> &str {
-        "Changes the current directory."
+    fn description(&self) -> CommandInfo {
+        CommandInfo {
+            description: "Changes the current directory.",
+            syntax: "cd [directory]",
+        }
     }
 }
 
@@ -81,37 +92,59 @@ impl Command for LsCommand {
         Ok(())
     }
 
-    fn description(&self) -> &str {
-        "ls [-a | all] - Lists the contents of the current directory."
+    fn description(&self) -> CommandInfo {
+        CommandInfo {
+            description: "Lists the contents of the current directory.",
+            syntax: "ls [-a | all]",
+        }
     }
 }
 
 pub struct HelpCommand;
-
 impl Command for HelpCommand {
     fn run(&self, _shell: &mut Shell, _args: &[String]) -> Result<(), &'static str> {
         println!("\nAvailable commands:\n");
 
-        for (name, description) in CommandRegistry::new().list_commands() {
-            println!("{} - {}", name, description);
+        for (name, cmd_info) in CommandRegistry::new().list_commands() {
+            println!(
+                "{} - {}\n      Syntax: {}\n",
+                name, cmd_info.description, cmd_info.syntax
+            );
         }
-
-        println!();
         Ok(())
     }
-
-    fn description(&self) -> &str {
-        "Displays this help message."
+    fn description(&self) -> CommandInfo {
+        CommandInfo {
+            description: "Displays this help message.",
+            syntax: "help",
+        }
     }
 }
 
 pub struct QuitCommand;
 impl Command for QuitCommand {
-    fn run(&self, mut shell: &mut Shell, _args: &[String]) -> Result<(), &'static str> {
+    fn run(&self, shell: &mut Shell, _args: &[String]) -> Result<(), &'static str> {
         shell.close_shell = true;
         Ok(())
     }
-    fn description(&self) -> &str {
-        "Exits the shell."
+    fn description(&self) -> CommandInfo {
+        CommandInfo {
+            description: "Exits the shell",
+            syntax: "quit",
+        }
+    }
+}
+
+pub struct ClearCommand;
+impl Command for ClearCommand {
+    fn run(&self, mut _shell: &mut Shell, _args: &[String]) -> Result<(), &'static str> {
+        print!("{}[2J", 27 as char); //clear screen
+        Ok(())
+    }
+    fn description(&self) -> CommandInfo {
+        CommandInfo {
+            description: "Clears the console",
+            syntax: "clear",
+        }
     }
 }
