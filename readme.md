@@ -1,0 +1,1 @@
+A very basic shell written in Rust. Currently supports commands `ls` and `cd` with basic directory traversal.
