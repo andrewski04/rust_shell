@@ -1,0 +1,3 @@
+version = "1.0"
+name = "Rust Shell"
+style = "I Love Rachel Shell {curr_dir}>"
