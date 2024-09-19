@@ -13,6 +13,9 @@ impl CommandRegistry {
         // registers commands
         registry.register_command("cd", Box::new(cmd::CdCommand));
         registry.register_command("ls", Box::new(cmd::LsCommand));
+        registry.register_command("help", Box::new(cmd::HelpCommand));
+        registry.register_command("quit", Box::new(cmd::QuitCommand));
+
         registry
     }
 
@@ -22,5 +25,12 @@ impl CommandRegistry {
 
     pub fn get_command(&self, name: &str) -> Option<&Box<dyn cmd::Command>> {
         self.commands.get(name)
+    }
+
+    pub fn list_commands(&self) -> Vec<(&str, &str)> {
+        self.commands
+            .iter()
+            .map(|(name, command)| (name.as_str(), command.description()))
+            .collect()
     }
 }

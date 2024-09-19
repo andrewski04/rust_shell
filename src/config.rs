@@ -7,6 +7,7 @@ pub struct Config {
     pub version: String,
     pub name: String,
     pub style: String,
+    pub motd: String,
 }
 
 impl Config {

@@ -15,6 +15,9 @@ fn main() {
         }
     };
 
+    print!("{}[2J", 27 as char); //clear screen
+    println!("{}", config.motd);
+
     // build new shell obj from config
     let mut shell = Shell::build(config);
 

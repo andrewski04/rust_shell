@@ -1,15 +1,15 @@
+use crate::cmd_registry::CommandRegistry;
 use crate::shell::Shell;
 use std::fs;
 use std::path::PathBuf;
-
 // trait implemented by commands to run
 pub trait Command {
     fn run(&self, shell: &mut Shell, args: &[String]) -> Result<(), &'static str>;
+    fn description(&self) -> &str;
 }
 
 // implementation of cd command
 pub struct CdCommand;
-
 impl Command for CdCommand {
     fn run(&self, shell: &mut Shell, args: &[String]) -> Result<(), &'static str> {
         // Check if arguments are provided
@@ -40,20 +40,78 @@ impl Command for CdCommand {
             Err(_) => Err("Invalid path or directory does not exist"),
         }
     }
+
+    fn description(&self) -> &str {
+        "Changes the current directory."
+    }
 }
 
 // implementation of ls command
 pub struct LsCommand;
 impl Command for LsCommand {
     fn run(&self, shell: &mut Shell, _args: &[String]) -> Result<(), &'static str> {
-        println!("Listing directory contents...");
+        // check for "all" or "-a" arg
+        let show_all = _args.iter().any(|arg| arg == "all" || arg == "-a");
 
-        let paths = fs::read_dir(&shell.curr_dir).unwrap();
+        // reads current dir
+        let paths = fs::read_dir(&shell.curr_dir).map_err(|_| "Failed to read the directory\n")?;
+        println!();
 
         for path in paths {
-            println!("Name: {}", path.unwrap().path().display())
+            let entry = path.map_err(|_| "Failed to read a directory entry")?;
+            let path = entry.path();
+
+            // skip hidden files if no `all` arg
+            if !show_all {
+                if let Some(file_name) = path.file_name() {
+                    if file_name.to_string_lossy().starts_with('.') {
+                        continue;
+                    }
+
+                    // print only file name
+                    println!("{}", file_name.to_string_lossy());
+                }
+            } else {
+                // print full path for `all` arg
+                println!("{}", path.display());
+            }
         }
 
+        println!();
         Ok(())
+    }
+
+    fn description(&self) -> &str {
+        "ls [-a | all] - Lists the contents of the current directory."
+    }
+}
+
+pub struct HelpCommand;
+
+impl Command for HelpCommand {
+    fn run(&self, _shell: &mut Shell, _args: &[String]) -> Result<(), &'static str> {
+        println!("\nAvailable commands:\n");
+
+        for (name, description) in CommandRegistry::new().list_commands() {
+            println!("{} - {}", name, description);
+        }
+
+        println!();
+        Ok(())
+    }
+
+    fn description(&self) -> &str {
+        "Displays this help message."
+    }
+}
+
+pub struct QuitCommand;
+impl Command for QuitCommand {
+    fn run(&self, mut shell: &mut Shell, _args: &[String]) -> Result<(), &'static str> {
+        shell.close_shell = true;
+        Ok(())
+    }
+    fn description(&self) -> &str {
+        "Exits the shell."
     }
 }

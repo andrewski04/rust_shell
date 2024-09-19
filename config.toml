@@ -1,3 +1,4 @@
 version = "1.0"
 name = "Rust Shell"
-style = "RS {curr_dir}>"
+motd = "Rust Shell v1.0 by Andrew Houser\nhttps://github.com/andrewski04/\n\n"
+style = "RustSH {curr_dir}>"

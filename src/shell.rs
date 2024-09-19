@@ -9,29 +9,36 @@ use std::{
 pub struct Shell {
     config: Config,
     pub curr_dir: PathBuf,
+    pub close_shell: bool,
 }
 
 impl Shell {
     // builds the shell object, containing configuration options
     pub fn build(config: Config) -> Shell {
         let curr_dir = current_dir().unwrap();
-        Shell { config, curr_dir }
+        Shell {
+            config,
+            curr_dir,
+            close_shell: false,
+        }
     }
 
     // Starts the shell execution. this will return an `Ok(())` when gracefully exited,
     // otherwise it returns an error with proper message
     pub fn spawn(&mut self) -> Result<(), &'static str> {
         let registry = CommandRegistry::new();
-
-        let quit = false;
-        while !quit {
+        while !self.close_shell {
             // creates commands input prompt and replaces placeholder with the current directory
             let curr_dir_str = self.curr_dir.to_str().unwrap();
             let prompt = self
                 .config
                 .style
-                .replace("{curr_dir}", curr_dir_str.replace("\\\\?\\", "").as_str());
+                .replace("{curr_dir}", curr_dir_str.replace("\\\\?\\", "").as_str()); //fix windows long dir formatting
             let user_input = input_handler(prompt).unwrap();
+
+            if user_input.is_empty() {
+                continue;
+            }
 
             if let Some(command) = registry.get_command(&user_input[0]) {
                 command
